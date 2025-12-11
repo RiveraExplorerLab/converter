@@ -1,5 +1,7 @@
 # Converter
 
+[![Lint](https://github.com/RiveraExplorerLab/converter/actions/workflows/lint.yml/badge.svg)](https://github.com/RiveraExplorerLab/converter/actions/workflows/lint.yml)
+
 A local-first image conversion tool with JWT authentication.
 
 ## Status
