@@ -1,5 +1,5 @@
 import { execSync } from 'child_process'; //runs shell command
-import path from 'path'; //handles file paths 
+import path from 'path'; //handles file paths
 import { fileURLToPath } from 'url'; //converts es module urls to file paths
 import { config } from 'dotenv'; //loads .env files
 
@@ -22,8 +22,8 @@ if (!validCommands.includes(command)) {
 const args = command === 'create' ? `create ${process.argv[3] || 'migration'}` : command;
 
 //Runs node-pg-migrate with:
-execSync(`npx node-pg-migrate ${args}`, { 
+execSync(`npx node-pg-migrate ${args}`, {
   stdio: 'inherit', //shows output in your terminal
   cwd: __dirname, //runs from /server directory
-  env: { ...process.env } //passes all environment variables
+  env: { ...process.env }, //passes all environment variables
 });

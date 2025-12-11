@@ -14,14 +14,14 @@ app.use(express.json());
 app.get('/health', async (req, res) => {
   try {
     const result = await query('SELECT NOW()');
-    res.json({ 
-      status: 'ok', 
-      timestamp: result.rows[0].now 
+    res.json({
+      status: 'ok',
+      timestamp: result.rows[0].now,
     });
   } catch (error) {
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Database connection failed' 
+    res.status(500).json({
+      status: 'error',
+      message: 'Database connection failed',
     });
   }
 });
