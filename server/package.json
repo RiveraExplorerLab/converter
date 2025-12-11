@@ -4,12 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "node --env-file=../.env src/index.js",
+    "dev": "node --watch --env-file=../.env src/index.js",
     "migrate:up": "node migrate.js up",
     "migrate:down": "node migrate.js down",
     "migrate:create": "node migrate.js create"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
+    "express": "^5.1.0",
     "node-pg-migrate": "^8.0.3",
     "pg": "^8.16.3"
   }
