@@ -1,5 +1,16 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate:up": "node migrate.js up",
+    "migrate:down": "node migrate.js down",
+    "migrate:create": "node migrate.js create"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "node-pg-migrate": "^8.0.3",
+    "pg": "^8.16.3"
+  }
 }
