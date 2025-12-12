@@ -4,6 +4,7 @@ import cors from 'cors';
 import { query } from './db/index.js';
 import authRoutes from './routes/auth.js';
 import cookieParser from 'cookie-parser';
+import { authenticate } from './middleware/authenticate.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,4 +36,16 @@ app.get('/health', async (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+});
+
+app.get('/api/me', authenticate, async (req, res) => {
+  const result = await query('SELECT id, email, created_at FROM users WHERE id = $1', [
+    req.user.id,
+  ]);
+
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  res.json({ user: result.rows[0] });
 });
