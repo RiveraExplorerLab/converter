@@ -2,7 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import { query } from '../db/index.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 
 const router = express.Router();
 
@@ -115,6 +115,71 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// POST /api/auth/refresh
+router.post('/refresh', async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'Refresh token required' });
+  }
+
+  try {
+    // 1. Verify token signature and expiration
+    const payload = verifyRefreshToken(refreshToken);
+
+    // 2. Check if token exists in database (not revoked)
+    const tokenHash = hashToken(refreshToken);
+    const result = await query(
+      `SELECT id, user_id, expires_at FROM refresh_tokens
+       WHERE token_hash = $1`,
+      [tokenHash]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid refresh token' });
+    }
+
+    const storedToken = result.rows[0];
+
+    // 3. Check if expired in database
+    if (new Date(storedToken.expires_at) < new Date()) {
+      await query('DELETE FROM refresh_tokens WHERE id = $1', [storedToken.id]);
+      return res.status(401).json({ error: 'Refresh token expired' });
+    }
+
+    // 4. Delete old refresh token (rotation)
+    await query('DELETE FROM refresh_tokens WHERE id = $1', [storedToken.id]);
+
+    // 5. Generate new tokens
+    const newAccessToken = generateAccessToken(payload.userId);
+    const newRefreshToken = generateRefreshToken(payload.userId);
+
+    // 6. Store new refresh token
+    const newTokenHash = hashToken(newRefreshToken);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await query(
+      `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+       VALUES ($1, $2, $3)`,
+      [payload.userId, newTokenHash, expiresAt]
+    );
+
+    // 7. Set new refresh token cookie
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // 8. Return new access token
+    res.json({ accessToken: newAccessToken });
+  } catch (error) {
+    console.error('Refresh error:', error);
+    return res.status(401).json({ error: 'Invalid refresh token' });
   }
 });
 
